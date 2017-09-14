@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/CSC-DevOps/TestGeneration.svg?branch=master)](https://travis-ci.org/CSC-DevOps/TestGeneration)
+
 ## Test Generation
 
 The goal of this work shop is to learn use a combination of mocking, random testing, and feedback-directed testing to automatically increase testing coverage. This is a powerful technique that can automatically discover bugs in new commits deployed to a build server before hitting production or affecting canary servers.
