@@ -301,3 +301,4 @@ if (!String.prototype.format) {
 }
 
 main();
+exports.main = main;
