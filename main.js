@@ -39,6 +39,7 @@ function Constraint(properties)
 	this.expression = properties.expression;
 	this.operator = properties.operator;
 	this.value = properties.value;
+	this.altvalue = properties.altvalue;
 	this.funcName = properties.funcName;
 	// Supported kinds: "fileWithContent","fileExists"
 	// integer, string, phoneNumber
@@ -71,22 +72,42 @@ var mockFileLibrary =
 	}
 };
 
+function initalizeParams(constraints)
+{
+	var params = {};
+	
+	// initialize params
+	for (var i =0; i < constraints.params.length; i++ )
+	{
+		var paramName = constraints.params[i];
+		params[paramName] = '\'\'';
+	}
+	return params;	
+}
+
+function fillParams(constraints,params,property)
+{
+	// plug-in values for parameters
+	for( var c = 0; c < constraints.length; c++ )
+	{
+		var constraint = constraints[c];
+		if( params.hasOwnProperty( constraint.ident ) )
+		{
+			params[constraint.ident] = constraint[property];
+		}
+	}
+}
+
 function generateTestCases()
 {
 
 	var content = "var subject = require('./subject.js')\nvar mock = require('mock-fs');\n";
 	for ( var funcName in functionConstraints )
 	{
-		var params = {};
 
-		// initialize params
-		for (var i =0; i < functionConstraints[funcName].params.length; i++ )
-		{
-			var paramName = functionConstraints[funcName].params[i];
-			//params[paramName] = '\'' + faker.phone.phoneNumber()+'\'';
-			params[paramName] = '\'\'';
-		}
-
+		var params = initalizeParams(functionConstraints[funcName])
+		var altparams = initalizeParams(functionConstraints[funcName])
+		
 		//console.log( params );
 
 		// update parameter values based on known constraints.
@@ -95,18 +116,16 @@ function generateTestCases()
 		var fileWithContent = _.some(constraints, {kind: 'fileWithContent' });
 		var pathExists      = _.some(constraints, {kind: 'fileExists' });
 
-		// plug-in values for parameters
-		for( var c = 0; c < constraints.length; c++ )
-		{
-			var constraint = constraints[c];
-			if( params.hasOwnProperty( constraint.ident ) )
-			{
-				params[constraint.ident] = constraint.value;
-			}
-		}
+		fillParams(constraints,params,"value")
+		fillParams(constraints,altparams,"altvalue")
+		
+		//console.log("ALT",altparams)
+		//console.log("P",params)
 
 		// Prepare function arguments.
 		var args = Object.keys(params).map( function(k) {return params[k]; }).join(",");
+		var altargs = Object.keys(altparams).map( function(k) {return altparams[k]; }).join(",");
+		
 		if( pathExists || fileWithContent )
 		{
 			content += generateMockFsTestCases(pathExists,fileWithContent,funcName, args);
@@ -117,8 +136,11 @@ function generateTestCases()
 		}
 		else
 		{
+
+			console.log( altargs )
 			// Emit simple test case.
 			content += "subject.{0}({1});\n".format(funcName, args );
+			content += "subject.{0}({1});\n".format(funcName, altargs );
 		}
 
 	}
@@ -185,6 +207,29 @@ function constraints(filePath)
 							{
 								ident: child.left.name,
 								value: rightHand,
+								altvalue: !rightHand,
+								funcName: funcName,
+								kind: "integer",
+								operator : child.operator,
+								expression: expression
+							}));
+					}
+				}
+
+				if( child.type === 'BinaryExpression' && child.operator == "<" )
+				{
+					if( child.left.type == 'Identifier' && params.indexOf( child.left.name ) > -1)
+					{
+						// get expression from original source code:
+						var expression = buf.substring(child.range[0], child.range[1]);
+						var rightHand = buf.substring(child.right.range[0], child.right.range[1])
+
+						functionConstraints[funcName].constraints.push( 
+							new Constraint(
+							{
+								ident: child.left.name,
+								value: parseInt(rightHand) - 1,
+								altvalue: parseInt(rightHand) +1,
 								funcName: funcName,
 								kind: "integer",
 								operator : child.operator,
