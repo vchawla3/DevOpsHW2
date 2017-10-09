@@ -419,6 +419,7 @@ function constraints(filePath)
 								expression: expression
 							}));
 					}
+
 				}
 
 				// if( child.type === 'BinaryExpression' && child.operator == "!=" )
@@ -511,32 +512,29 @@ function constraints(filePath)
 					}
 				}
 
-				// if( child.type == "CallExpression" && 
-				// 	 child.callee.property &&
-				// 	 child.callee.property.name =="indexOf" )
-				// {
-				// 	// for( var p =0; p < params.length; p++ )
-				// 	// {
-				// 	// 	if( child.arguments[0].name == params[p] )
-				// 	// 	{
-				// 	// 		functionConstraints[funcName].constraints.push( 
-				// 	// 		new Constraint(
-				// 	// 		{
-				// 	// 			ident: params[p],
-				// 	// 			value:  "'pathContent/file1'",
-				// 	// 			funcName: funcName,
-				// 	// 			kind: "fileWithContent",
-				// 	// 			operator : child.operator,
-				// 	// 			expression: expression
-				// 	// 		}));
-				// 	// 	}
-				// 	// }
+				if( child.type == "CallExpression" && 
+					 child.callee.property &&
+					 child.callee.property.name =="indexOf" )
+				{
+					// for( var p =0; p < params.length; p++ )
+					// {
+					// 	if( child.arguments[0].name == params[p] )
+					// 	{
+					var expression = buf.substring(child.range[0], child.range[1]);
+					var id = child.callee.object.name;
+					var val = child.arguments[0].raw
 
-				// 	var expression = buf.substring(child.range[0], child.range[1]);
-
-
-
-				// }
+					functionConstraints[funcName].constraints.push( 
+					new Constraint(
+					{
+						ident: id,
+						value:  val,
+						funcName: funcName,
+						kind: "string",
+						operator : child.operator,
+						expression: expression
+					}));
+				}
 
 				if( child.type == "CallExpression" && 
 					 child.callee.property &&
