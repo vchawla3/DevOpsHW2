@@ -151,7 +151,7 @@ function generateTestCases()
 	for ( var funcName in functionConstraints )
 	{
 
-		console.log(funcName);
+		//console.log(funcName);
 		var params = initalizeParams(functionConstraints[funcName]);
 
 		//var altparams = initalizeParams(functionConstraints[funcName]);
@@ -196,7 +196,7 @@ function generateTestCases()
 		permutedArray = permute(constraintsbykey);
 		
 		//permutedArray = permutedArray.filter( onlyUnique );
-		console.log(permutedArray);
+		//console.log(permutedArray);
 		
 		// This will pass in the empty strings to the methods that take them
 		if (permutedArray.length == 0) 
@@ -321,7 +321,7 @@ function constraints(filePath)
 					// set phone number!!
 					if( child.left.type == 'Identifier' && child.left.name == 'area')
 					{
-						console.log( functionConstraints[funcName].params );
+						//console.log( functionConstraints[funcName].params );
 						for( var i = 0; i < functionConstraints[funcName].params.length; i++ )
 						{
 							if ( functionConstraints[funcName].params[i] == 'phoneNumber' )
@@ -329,7 +329,7 @@ function constraints(filePath)
 								var rightHand = buf.substring(child.right.range[0], child.right.range[1])
 								var restOfPhone = faker.phone.phoneNumberFormat();
 								rightHand = rightHand.substring(1,4) + restOfPhone.substring(3,restOfPhone.length-1);
-								console.log(rightHand);
+								//console.log(rightHand);
 
 
 								// set a constraint with a phone number with the same area code as area var
@@ -664,7 +664,7 @@ function constraints(filePath)
 					}
 				}
 
-				// if child is a conditional, then we set the param it has in it to false
+				// if child is a logical expression, then we set the params being checked to true and false
 				
 				if (child.type == "LogicalExpression")
 				{
@@ -674,7 +674,6 @@ function constraints(filePath)
 						new Constraint(
 						{
 							ident: child.left.argument.name,
-							// A fake path to a dir but with content
 							value:  0,
 							funcName: funcName,
 							kind: "integer",
@@ -686,14 +685,49 @@ function constraints(filePath)
 						new Constraint(
 						{
 							ident: child.left.argument.name,
-							// A fake path to a dir but with content
 							value:  1,
 							funcName: funcName,
 							kind: "integer",
 							operator : child.operator,
 							expression: expression
 						}));
-					}	
+
+						
+					}
+					// if (typeof(child.right.argument) != "undefined")
+					// {
+					// 	console.log(child.right)
+					
+					// }
+
+				}
+
+				// if it is a member expression set it to true and false
+				if (child.type == "MemberExpression")
+				{
+					//console.log(child)
+					// if this is in the params object
+					if (params.indexOf( child.object.name ) > -1)
+					{
+						//if it has any properties
+						if (typeof(child.property) != "undefined")
+						{
+							var propname = child.property.name;
+							//console.log("PROPERTY");
+							var val = {};
+							val[propname] = 1;
+							functionConstraints[funcName].constraints.push( 
+							new Constraint(
+							{
+								ident: child.object.name,
+								value:  "\'"+ val + "\'",
+								funcName: funcName,
+								kind: "string",
+								operator : child.operator,
+								expression: expression
+							}));
+						}
+					}
 				}
 			});
 
