@@ -140,6 +140,10 @@ function fillParams(constraints,params,property)
 	}
 }
 
+function onlyUnique(value, index, self) { 
+    return self.indexOf(value) === index;
+}
+
 function generateTestCases()
 {
 
@@ -181,13 +185,19 @@ function generateTestCases()
 			var constr = params[k];
 			//This lists each varialble, and each value we need to set it too
 			//console.log("VAR: " + k + " -> " + constr);
+
+			// make sure we have unique values we set to these constraints, otherwise we will have redundant tests
+			constr = constr.filter( onlyUnique );
 			constraintsbykey.push(constr);
 		}
 
 		// This permuted array has all the different combinations of parameters we want to try for this function
+		// no redundant keys
 		permutedArray = permute(constraintsbykey);
-		//console.log(permutedArray);
-
+		
+		//permutedArray = permutedArray.filter( onlyUnique );
+		console.log(permutedArray);
+		
 		// This will pass in the empty strings to the methods that take them
 		if (permutedArray.length == 0) 
 		{
@@ -216,7 +226,7 @@ function generateTestCases()
 
 		for(var i = 0; i < permutedArray.length; i++)
 		{
-			console.log(permutedArray[i]);
+			//console.log(permutedArray[i]);
 			var args = permutedArray[i].join(",");
 
 
@@ -289,6 +299,23 @@ function constraints(filePath)
 			// Check for expressions using argument.
 			traverse(node, function(child)
 			{
+				if (child.type == "Identifier" && params.indexOf( child.name ) > -1 && funcName == "format")
+				{
+					var id = child.name;
+					if (typeof(id) == 'string')
+					{
+						functionConstraints[funcName].constraints.push( 
+						new Constraint(
+						{
+							ident: child.name,
+							value: "\'\'",
+							funcName: funcName,
+							kind: "string",
+							operator : child.operator,
+							expression: expression
+						}));
+					}
+				}
 				if( child.type === 'BinaryExpression')
 				{
 					// set phone number!!
@@ -635,6 +662,38 @@ function constraints(filePath)
 							}
 						}
 					}
+				}
+
+				// if child is a conditional, then we set the param it has in it to false
+				
+				if (child.type == "LogicalExpression")
+				{
+					if (typeof(child.left.argument) != "undefined")
+					{
+						functionConstraints[funcName].constraints.push( 
+						new Constraint(
+						{
+							ident: child.left.argument.name,
+							// A fake path to a dir but with content
+							value:  0,
+							funcName: funcName,
+							kind: "integer",
+							operator : child.operator,
+							expression: expression
+						}));
+
+						functionConstraints[funcName].constraints.push( 
+						new Constraint(
+						{
+							ident: child.left.argument.name,
+							// A fake path to a dir but with content
+							value:  1,
+							funcName: funcName,
+							kind: "integer",
+							operator : child.operator,
+							expression: expression
+						}));
+					}	
 				}
 			});
 
