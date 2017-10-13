@@ -10,8 +10,6 @@ The goal of this home work was to achieve full branch and statement coverage usi
 
 ##### Getting a simple coverage report
 
-[Useful resource](http://ariya.ofilabs.com/2012/12/javascript-code-coverage-with-istanbul.html) for istanbul.
-
 You can run the local version as follows:
 
     node_modules/.bin/istanbul cover test.js
